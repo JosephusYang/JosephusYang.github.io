@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"
+    ></script>
+    <script>
+      async function init() {
+        const query = {
+          resource: "http://www.chp.gov.hk/files/misc/building_list_chi.csv",
+          section: 1,
+          format: "json",
+          sorts: [[1, "asc"]]
+        };
+        const response = await fetch(
+          `https://api.data.gov.hk/v1/filter?q=${encodeURIComponent(JSON.stringify(query))}`
+        );
+        const json = await response.json();
+        const buildingList = json.rows.map(arr => ({
+          region: arr[0],
+          addr: arr[1],
+          date: arr[2],
+          related: arr[3]
+        }));
+
+        console.log(buildingList);
+        const regionList = _.groupBy(buildingList, "region");
+        let result = "";
+        const lineBreak = "<br>";
+        result += `過去 14 天內曾有確診/疑似個案居住過、或曾出現兩宗或以上確診個案的大廈及最後逗留日期${lineBreak}`;
+        for (const region in regionList) {
+          result += `${region}${lineBreak}`;
+          regionList[region].forEach(({ addr, date }, index) => {
+            result += `${index + 1}. ${addr} (${date})${lineBreak}`;
+          });
+          result += lineBreak;
+        }
+
+        const body = document.getElementById("body");
+        body.innerHTML = result;
+      }
+      init();
+    </script>
+  </head>
+  <body id="body"></body>
+</html>
