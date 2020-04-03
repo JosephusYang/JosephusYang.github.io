@@ -17,8 +17,8 @@
         );
         const json = await response.json();
         const buildingList = json.rows.map(arr => ({
-          region: arr[0],
-          addr: arr[1],
+          region: arr[0].replace("區", "").trim(),
+          addr: arr[1].trim(),
           date: arr[2],
           related: arr[3]
         }));
@@ -29,10 +29,17 @@
         const lineBreak = "<br>";
         result += `過去 14 天內曾有確診/疑似個案居住過、或曾出現兩宗或以上確診個案的大廈及最後逗留日期${lineBreak}`;
         for (const region in regionList) {
-          result += `${region}${lineBreak}`;
-          regionList[region].forEach(({ addr, date }, index) => {
-            result += `${index + 1}. ${addr} (${date})${lineBreak}`;
-          });
+          result += `${region}區${lineBreak}`;
+          const groupedBuildingList = _.groupBy(regionList[region], "addr");
+          let index = 1;
+          for (const addr in groupedBuildingList) {
+            buildings = groupedBuildingList[addr];
+            const dates = buildings.map(b => b.date).filter(d => !!d).join(", ");
+            let line = `${index++}. ${addr}`;
+            if (dates) line += `(${dates})`;
+            if (buildings.length > 1) line += `[${buildings.length}]`;
+            result += `${line}${lineBreak}`;
+          }
           result += lineBreak;
         }
 
